@@ -1,6 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Student from '#models/student'
+import { createStudentValidator } from '#validators/student'
+import { SimpleMessagesProvider } from '@vinejs/vine'
 
+const messages = {
+      'rollNo.regex': 'The roll number not in the proper format:(e.g., 24ABC1234)',
+      'rollNo.unique': 'This roll number is already registered',
+      'departmentId.exists': 'The selected department does not exist'
+    }
 export default class StudentsController {
 
   async index({ response }: HttpContext) {
@@ -10,16 +17,13 @@ export default class StudentsController {
 
  
   async store({ request, response }: HttpContext) {
-    const data = request.all()
-    
-    const student = await Student.create({
-      rollNo: data.rollNo,
-      name: data.name,
-      departmentId: data.departmentId
-    })
 
-    return response.created(student)
-  }
+  const data = await await request.validateUsing(createStudentValidator, {
+      messagesProvider: new SimpleMessagesProvider(messages)
+    })
+  const student = await Student.create(data)
+  return response.created(student)
+}
 
   async show({ params, response }: HttpContext) {
     try {

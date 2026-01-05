@@ -8,8 +8,7 @@ export default class extends BaseSchema {
       table.increments('id').notNullable()
       table.string('name').notNullable()
       table.string('roll_no').notNullable().unique()
-      
-      // Foreign Key for Department
+
       table
         .integer('department_id')
         .unsigned()

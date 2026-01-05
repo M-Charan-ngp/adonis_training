@@ -12,6 +12,7 @@ const PostsController = () => import('#controllers/posts_controller')
 const DepartmentsController = () => import('#controllers/departments_controller')
 const CoursesController = () => import('#controllers/courses_controller')
 const StudentsController = () => import('#controllers/students_controller')
+import { middleware } from '#start/kernel'
 
 router.get('/', async () => {
   return {
@@ -30,6 +31,7 @@ router.group(() => {
   // Custom enrollment route
   router.post('enroll', [StudentsController, 'enroll'])
 }).prefix('/api')
+.use(middleware.auth_key())
 
 // router.get('/post/:name/*',({params})=>{
 //   return params

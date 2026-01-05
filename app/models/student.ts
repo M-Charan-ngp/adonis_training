@@ -15,9 +15,6 @@ export default class Student extends BaseModel {
   declare rollNo: string
 
   @column()
-  declare email: string
-
-  @column()
   declare departmentId: number
 
   @belongsTo(() => Department)
