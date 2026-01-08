@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, belongsTo, manyToMany } from '@adonisjs/lucid/orm'
 import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import Department from '#models/department'
 import Course from '#models/course'
 
@@ -25,6 +26,7 @@ export default class Student extends BaseModel {
     pivotForeignKey: 'student_id',
     pivotRelatedForeignKey: 'course_id',
   })
+
   declare courses: ManyToMany<typeof Course>
 
   @column.dateTime({ autoCreate: true })
@@ -32,4 +34,7 @@ export default class Student extends BaseModel {
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime
+
+  static accessTokens = DbAccessTokensProvider.forModel(Student);
+
 }

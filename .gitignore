@@ -23,3 +23,25 @@ yarn-error.log
 
 # Platform specific
 .DS_Store
+
+# TypeScript compilation info
+*.tsbuildinfo
+
+# AdonisJS 6 internal storage
+.adonisjs/
+
+# SQLite databases
+*.sqlite
+*.sqlite-journal
+*.sqlite3
+
+# If you use the 'drive' disk for uploads (e.g., student profile pictures)
+storage/
+
+# Test coverage
+coverage/
+.nyc_output
+
+# Log files
+logs/
+*.log

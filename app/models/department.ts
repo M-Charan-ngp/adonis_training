@@ -12,17 +12,13 @@ export default class Department extends BaseModel {
   declare name: string
 
   @column()
-  declare code: string // e.g., "CS", "ME"
+  declare code: string
 
-  /**
-   * One-to-Many: A department has many students
-   */
+  // A department has many students
   @hasMany(() => Student)
   declare students: HasMany<typeof Student>
 
-  /**
-   * One-to-Many: A department has many courses
-   */
+  // A department has many courses
   @hasMany(() => Course)
   declare courses: HasMany<typeof Course>
 

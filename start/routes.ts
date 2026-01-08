@@ -12,7 +12,7 @@ const PostsController = () => import('#controllers/posts_controller')
 const DepartmentsController = () => import('#controllers/departments_controller')
 const CoursesController = () => import('#controllers/courses_controller')
 const StudentsController = () => import('#controllers/students_controller')
-import { middleware } from '#start/kernel'
+//import { middleware } from '#start/kernel'
 
 router.get('/', async () => {
   return {
@@ -24,14 +24,14 @@ router.get('/', async () => {
 router.resource('posts', PostsController).apiOnly
 
 router.group(() => {
-  router.resource('departments', DepartmentsController).apiOnly()
-  router.resource('courses', CoursesController).apiOnly()
-  router.resource('students', StudentsController).apiOnly()
+  router.resource('departments', DepartmentsController).apiOnly().where('id', router.matchers.number())
+  router.resource('courses', CoursesController).apiOnly().where('id', router.matchers.number())
+  router.resource('students', StudentsController).apiOnly().where('id', router.matchers.number())
   
-  // Custom enrollment route
   router.post('enroll', [StudentsController, 'enroll'])
 }).prefix('/api')
-.use(middleware.auth_key())
+//.use(middleware.auth_key())
+
 
 // router.get('/post/:name/*',({params})=>{
 //   return params
@@ -43,9 +43,10 @@ router.group(() => {
 //     }
 //       return params.id
 //   })
-//   .where('id', {
-//     match: /^[0-9]+$/,
-//   })
+  // .where('id', {
+  //   match: /^[0-9]+$/,
+  //  router.matchers.number()
+  // })
 // router.get('/about', () => {
 //   return 'This is the about page.'
 // })
