@@ -1,6 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Student from '#models/student'
-import { createStudentValidator, updateStudentValidator, getStudentQueryValidator } from '#validators/student'
+import { createStudentValidator, 
+  updateStudentValidator, 
+  getStudentQueryValidator,
+  putEnrollQueryValidator } from '#validators/student'
 import { SimpleMessagesProvider } from '@vinejs/vine'
 
 const messages = {
@@ -109,16 +112,13 @@ export default class StudentsController {
   }
 
   // Enroll student in a course
-  public async enroll({ request, response }: HttpContext) {
-    // try {
-      const { studentId, courseId } = request.only(['studentId', 'courseId'])
-      
-      const student = await Student.findOrFail(studentId)
-      await student.related('courses').attach([courseId])
+  async enroll({ request, response, auth_user }: HttpContext) {
+    const payload = await request.validateUsing(putEnrollQueryValidator)
+    const student = await Student.findOrFail(auth_user.id)
+    await student.related('courses').sync([payload.courseId], false)
 
-      return response.ok({ message: 'Enrolled successfully' })
-    // } catch (error) {
-    //   return response.badRequest({ error: 'Enrollment failed', details: 'Invalid Student or Course ID' })
-    // }
+    return response.ok({ 
+      message: `You have successfully enrolled in the course.` 
+    })
   }
 }

@@ -1,6 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Course from '#models/course'
-import { createCourseValidator, updateCourseValidator,getCourseQueryValidator } from '#validators/course'
+import { createCourseValidator, 
+  updateCourseValidator,
+  getCourseQueryValidator,
+  enrollStudentsValidator } from '#validators/course'
 import { SimpleMessagesProvider } from '@vinejs/vine'
 
 const messages = {
@@ -44,9 +47,7 @@ async index({ request, response }: HttpContext) {
     // }
   }
 
-  /**
-   * Show a single course
-   */
+// Show a single course
 async show({ params, request, response }: HttpContext) {
   const queryData = await request.validateUsing(getCourseQueryValidator)
 
@@ -82,6 +83,15 @@ async show({ params, request, response }: HttpContext) {
     //   })
     // }
   }
+
+
+  async enrollStudents({ params, request, response }: HttpContext) {
+    
+    const payload = await request.validateUsing(enrollStudentsValidator)
+    const course = await Course.findOrFail(params.id)
+    await course.related('students').sync(payload.studentIds, false)
+    return response.ok({ message: 'Students enrolled successfully.' })
+}
 
   // Delete Course
   async destroy({ params, response }: HttpContext) {

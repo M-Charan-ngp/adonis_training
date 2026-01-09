@@ -1,5 +1,6 @@
 import vine from '@vinejs/vine'
 
+
 const courseSchema = {
   title: vine.string().trim().minLength(3).maxLength(200),
   credits: vine.number().min(1).max(6),
@@ -9,6 +10,9 @@ const courseSchema = {
 }
 export const createCourseValidator = vine.compile(
     vine.object({
+        title: courseSchema.title,
+        credits: courseSchema.credits,
+        departmentId: courseSchema.departmentId,
         courseCode: vine.string().trim()
         .regex(/^[A-Z]{2}[0-9]{3}$/)
         .unique(async (db,value)=>{
@@ -24,7 +28,15 @@ export const getCourseQueryValidator = vine.compile(
     department: vine.boolean().optional(),
   })
 )
-
+export const enrollStudentsValidator = vine.compile(
+  vine.object({
+    studentIds: vine.array(
+      vine.number().exists(async (db, value) => {
+        return await db.from('students').where('id', value).first()
+      })
+    ).minLength(1)
+  })
+)
 export const updateCourseValidator = vine.compile(
   vine.object({
     title: courseSchema.title.optional(),

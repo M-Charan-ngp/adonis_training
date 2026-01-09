@@ -37,8 +37,7 @@ server.use([
 router.use([
   () => import('@adonisjs/core/bodyparser_middleware'),
   () => import('@adonisjs/auth/initialize_auth_middleware'),
-  () => import('#middleware/request_path_log_middleware'),
-  () => import('#middleware/auth_key_middleware')
+  () => import('#middleware/request_path_log_middleware')
 ])
 
 /**
@@ -46,6 +45,7 @@ router.use([
  * the routes or the routes group.
  */
 export const middleware = router.named({
+  jwtAuth: () => import('#middleware/jwt_auth_middleware'),
   auth: () => import('#middleware/auth_middleware'),
   auth_key: () => import('#middleware/auth_key_middleware')
 })
