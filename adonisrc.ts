@@ -1,6 +1,9 @@
 import { defineConfig } from '@adonisjs/core/app'
 
 export default defineConfig({
+  commandsAliases: {
+    resource: 'make:controller --resource --singular',
+  },
   /*
   |--------------------------------------------------------------------------
   | Experimental flags
@@ -26,7 +29,7 @@ export default defineConfig({
   |
   */
   commands: [() => import('@adonisjs/core/commands'), () => import('@adonisjs/lucid/commands')],
-
+  
   /*
   |--------------------------------------------------------------------------
   | Service providers

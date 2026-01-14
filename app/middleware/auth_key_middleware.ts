@@ -6,7 +6,7 @@ export default class AuthKeyMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
     const apiKey = ctx.request.header('api-key')
     const SECRET_KEY = env.get("SECRET_KEY")
-
+    console.log("hello")
     if (!apiKey || apiKey !== SECRET_KEY) {
       return ctx.response.unauthorized({ error: 'Invalid or missing API Key' })
     }

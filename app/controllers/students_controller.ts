@@ -6,6 +6,8 @@ import { createStudentValidator,
   putEnrollQueryValidator } from '#validators/student'
 import { SimpleMessagesProvider } from '@vinejs/vine'
 
+
+
 const messages = {
   'rollNo.regex': 'The roll number not in the proper format: (e.g., 24ABC1234)',
   'rollNo.unique': 'This roll number is already registered',
@@ -115,8 +117,11 @@ export default class StudentsController {
   async enroll({ request, response, auth_user }: HttpContext) {
     const payload = await request.validateUsing(putEnrollQueryValidator)
     const student = await Student.findOrFail(auth_user.id)
-    await student.related('courses').sync([payload.courseId], false)
-
+    const alreadyEnrolled = await student.related('courses').query().where('courses.id', payload.courseId).first()
+    if (alreadyEnrolled) {
+      return response.badRequest('Already enrolled')
+    }
+    await student.related('courses').sync([payload.courseId],false)
     return response.ok({ 
       message: `You have successfully enrolled in the course.` 
     })

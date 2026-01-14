@@ -40,10 +40,25 @@ export default class HttpExceptionHandler extends ExceptionHandler {
       })
     }
 
-    if (error.code === 'E_UNAUTHORIZED_ACCESS' || error.status === 401) {
+    if (error.status === 401) {
       return ctx.response.status(401).send({
         status: 'error',
         message: 'You are not authorized to access.',
+      })
+    }
+    if (error.name === 'TokenExpiredError') {
+      return ctx.response.unauthorized({
+        status: 'fail',
+        code: 'E_JWT_EXPIRED',
+        message: 'Your session has expired. Please refresh your token.',
+        expiredAt: error.expiredAt,
+      })
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return ctx.response.unauthorized({
+        status: 'fail',
+        code: 'E_INVALID_JWT',
+        message: 'Invalid authentication token.',
       })
     }
 

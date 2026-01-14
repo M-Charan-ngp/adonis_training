@@ -1,10 +1,10 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, belongsTo, manyToMany } from '@adonisjs/lucid/orm'
-import type { BelongsTo, ManyToMany } from '@adonisjs/lucid/types/relations'
+import { BaseModel, column, belongsTo, manyToMany, hasMany } from '@adonisjs/lucid/orm'
+import type { BelongsTo, ManyToMany, HasMany } from '@adonisjs/lucid/types/relations'
+import RefreshToken from '#models/refresh_token'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import Department from '#models/department'
 import Course from '#models/course'
-
 export default class Student extends BaseModel {
   @column({ isPrimary: true })
   declare id: number
@@ -26,9 +26,10 @@ export default class Student extends BaseModel {
     pivotForeignKey: 'student_id',
     pivotRelatedForeignKey: 'course_id',
   })
-
   declare courses: ManyToMany<typeof Course>
 
+  @hasMany(() => RefreshToken)
+  declare refreshTokens: HasMany<typeof RefreshToken>
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

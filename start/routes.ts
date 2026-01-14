@@ -19,7 +19,15 @@ router.get('/', async () => {
     hello: 'world',
   }
 })
-router.post('/api/login', [AuthController, 'login'])
+
+router.group(()=>{
+    router.post("/api/login", [AuthController,"login"])
+  }
+).use(middleware.auth_key())
+
+router.post("/api/refresh",[AuthController, "refresh"])
+
+
 router.group(() => {
   router.resource('departments', DepartmentsController).apiOnly().where('id', router.matchers.number())
   router.resource('courses', CoursesController).apiOnly().where('id', router.matchers.number())

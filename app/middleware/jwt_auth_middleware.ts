@@ -3,6 +3,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { JwtService } from '#services/jwt_service'
 import Student from '#models/student'
 
+
 export default class JwtAuthMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
     const authHeader = ctx.request.header('authorization')
