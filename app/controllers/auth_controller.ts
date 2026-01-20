@@ -9,7 +9,6 @@ import string from '@adonisjs/core/helpers/string'
 
 export default class AuthController {
   async login({ request, response }: HttpContext) {
-    console.log("login funtion called")
     const data = await request.validateUsing(rollNumberValidator)
     console.log(data.rollNo)
 

@@ -11,44 +11,36 @@ const messages = {
 export default class DepartmentsController {
   
   //  List all departments
-  async index({ request,response }: HttpContext) {
-    // try {
+  async index({ request }: HttpContext) {
     const queryData = await request.validateUsing(getDepartmentQueryValidator)
-    const query = Department.query()
-    if (queryData.students) {
-      query.preload('students')
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 10)
+    let query = Department.query()
+    query = queryData.students ? query.preload('students'):query;
+    query = queryData.courses ? query.preload('courses'):query;
+
+    const departments = await query.paginate(page,limit)
+      return {
+      status: true,
+      data: departments
     }
-    if (queryData.courses) {
-      query.preload('courses')
-    }
-    const departments = await query
-      return response.ok(departments)
-    // } catch (error) {
-    //   return response.internalServerError({ error: 'Could not fetch departments' })
-    // }
   }
 
   // Create a department
-  async store({ request, response }: HttpContext) {
-    // try {
+  async store({ request }: HttpContext) {
       const data = await request.validateUsing(createDepartmentValidator, {
         messagesProvider: new SimpleMessagesProvider(messages),
       })
       const department = await Department.create(data)
-      return response.created(department)
-    // } catch (error) {
-      // if (error.status === 422) 
-      //   return response.unprocessableEntity(error.messages)
-      
-      // return response.badRequest({ 
-      //   error: 'Failed to create department', 
-      //   message: error.message 
-      // })
-    // }
+      return {
+        status: true,
+        message: 'Student created successfully',
+        data: department
+      }
   }
 
   //  Show department
-async show({ params, request, response }: HttpContext) {
+async show({ params, request }: HttpContext) {
   const queryData = await request.validateUsing(getDepartmentQueryValidator)
   const query = Department.query().where('id', params.id)
   if (queryData.students) {
@@ -58,39 +50,35 @@ async show({ params, request, response }: HttpContext) {
     query.preload('courses')
   }
   const department = await query.firstOrFail()
-  return response.ok(department)
+  return {
+    status: true,
+    data: department
+  }
 }
 
   //   Update department
-  async update({ params, request, response }: HttpContext) {
-    // try {
-      const department = await Department.findOrFail(params.id)
-      const data = await request.validateUsing(updateDepartmentValidator, {
-                              meta: { departmentId: params.id }
-                          })
-
-      department.merge(data)
-      await department.save()
-      return response.ok(department)
-    // } catch (error) {
-    //   return response.status(error.status || 400).json({ 
-    //     error: 'Update failed', 
-    //     message: error.message 
-    //   })
-    // }
+  async update({ params, request }: HttpContext) {
+    const data = await request.validateUsing(updateDepartmentValidator, {
+        meta: { departmentId: params.id }
+    })
+    const department = await Department.findOrFail(params.id)
+    department.merge(data)
+    await department.save()
+    return {
+      status: true,
+      data: department
+    }
   }
 
 
   //   Delete department
-  async destroy({ params, response }: HttpContext) {
-    // try {
+  async destroy({ params }: HttpContext) {
       const department = await Department.findOrFail(params.id)
       await department.delete()
-
-      return response.ok({ message: 'Department deleted successfully' })
-    // } catch (error) {
-    //   return response.notFound({ error: 'Department not found' })
-    // }
+      return { 
+        status: true,
+        message: 'Department deleted successfully' 
+      }
   }
 }
 

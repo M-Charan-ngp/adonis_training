@@ -14,11 +14,9 @@ export default class Department extends BaseModel {
   @column()
   declare code: string
 
-  // A department has many students
   @hasMany(() => Student)
   declare students: HasMany<typeof Student>
 
-  // A department has many courses
   @hasMany(() => Course)
   declare courses: HasMany<typeof Course>
 

@@ -6,6 +6,7 @@ import Student from '#models/student'
 
 export default class JwtAuthMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
+    console.log("jwt middleware")
     const authHeader = ctx.request.header('authorization')
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -14,7 +15,6 @@ export default class JwtAuthMiddleware {
 
     const token = authHeader.split(' ')[1]
     const payload = JwtService.verify(token) as { id: number; rollNo: string }
-    console.log(payload.rollNo)
 
     if (!payload) {
       return ctx.response.unauthorized({ message: 'Invalid or expired token' })

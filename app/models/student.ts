@@ -6,6 +6,7 @@ import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import Department from '#models/department'
 import Course from '#models/course'
 export default class Student extends BaseModel {
+  
   @column({ isPrimary: true })
   declare id: number
 
@@ -30,6 +31,7 @@ export default class Student extends BaseModel {
 
   @hasMany(() => RefreshToken)
   declare refreshTokens: HasMany<typeof RefreshToken>
+  
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 

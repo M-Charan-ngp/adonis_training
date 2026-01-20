@@ -13,7 +13,7 @@ const CoursesController = () => import('#controllers/courses_controller')
 const StudentsController = () => import('#controllers/students_controller')
 const AuthController = () => import('#controllers/auth_controller')
 import { middleware } from '#start/kernel'
-
+console.log("start/routes.ts");
 router.get('/', async () => {
   return {
     hello: 'world',
@@ -34,6 +34,7 @@ router.group(() => {
   router.resource('students', StudentsController).apiOnly().where('id', router.matchers.number())
 }).prefix('/api')
 .use(middleware.auth_key())
+
 
 router.group(() => {
   router.post('enroll', [StudentsController, 'enroll'])

@@ -23,12 +23,16 @@ export const getStudentQueryValidator = vine.compile(
   vine.object({
     courses: vine.boolean().optional(),
     department: vine.boolean().optional(),
+    page: vine.number().optional(),
+    limit: vine.number().optional()
   })
 )
 export const putEnrollQueryValidator = vine.compile(
+  
  vine.object({
     courseId: vine.number().exists(async (db, value) => {
       const match = await db.from('courses').where('id', value).first()
+      console.log("enroll validator")
       return !!match
     })
   })

@@ -21,8 +21,4 @@ export default class RefreshToken extends BaseModel {
 
     @belongsTo(()=>Student)
     declare student: BelongsTo<typeof Student>
-
-    get isExpired(){
-        return this.expiresAt < DateTime.now()
-    }
 }

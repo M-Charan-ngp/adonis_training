@@ -1,5 +1,5 @@
 import { defineConfig } from '@adonisjs/core/app'
-
+console.log("adonisrc.ts outside");
 export default defineConfig({
   commandsAliases: {
     resource: 'make:controller --resource --singular',
@@ -14,6 +14,7 @@ export default defineConfig({
   | during upgrade.
   |
   */
+ 
   experimental: {
     mergeMultipartFieldsAndFiles: true,
     shutdownInReverseOrder: true,

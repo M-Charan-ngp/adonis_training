@@ -7,7 +7,7 @@
 | or the router.
 |
 */
-
+console.log("start/kernal.ts");
 import router from '@adonisjs/core/services/router'
 import server from '@adonisjs/core/services/server'
 

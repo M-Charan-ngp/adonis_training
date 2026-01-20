@@ -10,7 +10,7 @@
 */
 
 import { Env } from '@adonisjs/core/env'
-
+console.log("start/env.ts");
 export default await Env.create(new URL('../', import.meta.url), {
   NODE_ENV: Env.schema.enum(['development', 'production', 'test'] as const),
   PORT: Env.schema.number(),
@@ -28,6 +28,6 @@ export default await Env.create(new URL('../', import.meta.url), {
   DB_USER: Env.schema.string(),
   DB_PASSWORD: Env.schema.string.optional(),
   DB_DATABASE: Env.schema.string(),
-
+  DB_DATABASE_2: Env.schema.string(),
   SECRET_KEY: Env.schema.string(),
 })

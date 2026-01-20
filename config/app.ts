@@ -10,6 +10,7 @@ import { defineConfig } from '@adonisjs/core/http'
  * The encryption module will fail to decrypt data if the key is lost or
  * changed. Therefore it is recommended to keep the app key secure.
  */
+console.log("config/app.ts");
 export const appKey = new Secret(env.get('APP_KEY'))
 
 /**

@@ -1,13 +1,13 @@
 import { defineConfig } from '@adonisjs/auth'
 import { basicAuthGuard, basicAuthUserProvider } from '@adonisjs/auth/basic_auth'
 import type { InferAuthenticators, InferAuthEvents, Authenticators } from '@adonisjs/auth/types'
-
+console.log("config/auth.ts");
 const authConfig = defineConfig({
   default: 'basicAuth',
   guards: {
     basicAuth: basicAuthGuard({
       provider: basicAuthUserProvider({
-        model: () => import('#models/user')
+        model: () => import('#models/student')
       }),
     }),
   },

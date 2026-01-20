@@ -14,74 +14,67 @@ const messages = {
 
 export default class CoursesController {
   // List all courses
-
 async index({ request, response }: HttpContext) {
   const queryData = await request.validateUsing(getCourseQueryValidator)
-  const query = Course.query()
+  const page = request.input('page', 1)
+  const limit = request.input('limit', 10)
+
+  let query = Course.query()
   if (queryData.department) {
     query.preload('department')
   }
   if (queryData.students) {
     query.preload('students')
   }
-  const courses = await query
-  return response.ok(courses)
+  const courses = await query.paginate(page, limit)
+  const serialized = courses.serialize()
+  
+  const cleanData = serialized.data.map((course: any) => {
+    const { createdAt, updatedAt, ...rest } = course
+    return rest
+  })
+
+  return response.status(200).send({
+    status: true,
+    data: {
+      meta: serialized.meta,
+      data: cleanData
+    }
+  })
 }
 
   // add course
   async store({ request, response }: HttpContext) {
-    // try {
-      const data = await request.validateUsing(createCourseValidator, {
-        messagesProvider: new SimpleMessagesProvider(messages),
-      })
-      const course = await Course.create(data)
-      return response.created(course)
-    // } catch (error) {
-    //   if (error.status === 422) 
-    //     return response.unprocessableEntity(error.messages)
-
-    //   return response.badRequest({
-    //     error: 'Course creation failed',
-    //     message: error.message,
-    //   })
-    // }
+    const data = await request.validateUsing(createCourseValidator, {
+      messagesProvider: new SimpleMessagesProvider(messages),
+    })
+    const course = await Course.create(data)
+    return response.created(course)
   }
 
 // Show a single course
-async show({ params, request, response }: HttpContext) {
-  const queryData = await request.validateUsing(getCourseQueryValidator)
+  async show({ params, request, response }: HttpContext) {
+    const queryData = await request.validateUsing(getCourseQueryValidator)
 
-  const query = Course.query().where('id', params.id)
+    let query = Course.query().where('id', params.id)
+    query = queryData.students ? query.preload('students') : query;
+    query = queryData.department ? query.preload('department') : query;
 
-  if (queryData.students) {
-    query.preload('students')
+    const course = await query.firstOrFail()
+    return response.ok(course)
   }
-  if (queryData.department) {
-    query.preload('department')
-  }
-
-  const course = await query.firstOrFail()
-  return response.ok(course)
-}
 
   // Update course
   async update({ params, request, response }: HttpContext) {
-    // try {
-      const course = await Course.findOrFail(params.id)
+    const course = await Course.findOrFail(params.id)
     const data = await request.validateUsing(updateCourseValidator, {
       meta: { courseId: params.id }
     })
 
-      course.merge(data)
-      await course.save()
+    course.merge(data)
+    await course.save()
 
-      return response.ok(course)
-    // } catch (error) {
-    //   return response.status(error.status || 400).json({
-    //     error: 'Update failed',
-    //     message: error.message,
-    //   })
-    // }
+    return response.ok(course)
   }
 
 
@@ -95,13 +88,8 @@ async show({ params, request, response }: HttpContext) {
 
   // Delete Course
   async destroy({ params, response }: HttpContext) {
-    // try {
-      const course = await Course.findOrFail(params.id)
-      await course.delete()
-
-      return response.ok({ message: 'Course deleted successfully' })
-    // } catch (error) {
-    //   return response.notFound({ error: 'Course not found or already deleted' })
-    // }
+    const course = await Course.findOrFail(params.id)
+    await course.delete()
+    return response.ok({ message: 'Course deleted successfully' })
   }
 }
