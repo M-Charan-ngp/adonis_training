@@ -2,27 +2,19 @@
 import Student from '#models/student'
 
 export default class StudentRepository {
-  /**
-   * Universal cleaner to strip timestamps from an object and its preloaded relations
-   */
   private clean(data: any) {
-    // If it's a Lucid Model, convert to JSON first
     const plain = data.toJSON ? data.toJSON() : data
     
-    // Remove timestamps from the main object
     const { createdAt, updatedAt, ...rest } = plain
 
-    // Automatically clean preloaded relationships like 'department' or 'courses'
     for (const key in rest) {
       if (rest[key] && typeof rest[key] === 'object') {
         if (Array.isArray(rest[key])) {
-          // If relationship is hasMany (like courses), clean each item
           rest[key] = rest[key].map((item: any) => {
             const { createdAt: _, updatedAt: __, ...itemRest } = item
             return itemRest
           })
         } else {
-          // If relationship is belongsTo (like department), clean the object
           const { createdAt: _, updatedAt: __, ...relRest } = rest[key]
           rest[key] = relRest
         }
@@ -43,7 +35,6 @@ export default class StudentRepository {
 
     return {
       meta: serialized.meta,
-      // Use the universal clean method for every row
       data: serialized.data.map((item: any) => this.clean(item))
     }
   }

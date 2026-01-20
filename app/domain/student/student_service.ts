@@ -1,4 +1,3 @@
-// app/domain/student/student_service.ts
 import { inject } from '@adonisjs/core'
 import StudentRepository from './student_repository.js'
 
@@ -17,7 +16,6 @@ export default class StudentService {
       courses: !!queryData.courses
     })
 
-    // Safely process the already cleaned data
     result.data = result.data.map((student: any) => ({
       ...student,
       rollNo: student.rollNo?.toUpperCase(),

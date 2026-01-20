@@ -14,6 +14,7 @@ const StudentsController = () => import('#controllers/students_controller')
 const AuthController = () => import('#controllers/auth_controller')
 import { middleware } from '#start/kernel'
 console.log("start/routes.ts");
+
 router.get('/', async () => {
   return {
     hello: 'world',
@@ -21,23 +22,24 @@ router.get('/', async () => {
 })
 
 router.group(()=>{
-    router.post("/api/login", [AuthController,"login"])
+    router.group(() => {
+      router.post("login", [AuthController,"login"])
+      router.post("refresh",[AuthController, "refresh"])
+      router.resource('departments', DepartmentsController).apiOnly().where('id', router.matchers.number())
+      router.resource('courses', CoursesController).apiOnly().where('id', router.matchers.number())
+      router.resource('students', StudentsController).apiOnly().where('id', router.matchers.number())
+    }).use(middleware.auth_key())
+
+    router.group(() => {
+      router.post('enroll', [StudentsController, 'enroll'])
+      router.post('courses/:id/enroll-students', [CoursesController, 'enrollStudents']).where('id', router.matchers.number())
+    }).use(middleware.jwtAuth())
+
   }
-).use(middleware.auth_key())
-
-router.post("/api/refresh",[AuthController, "refresh"])
+).prefix('/api')
 
 
-router.group(() => {
-  router.resource('departments', DepartmentsController).apiOnly().where('id', router.matchers.number())
-  router.resource('courses', CoursesController).apiOnly().where('id', router.matchers.number())
-  router.resource('students', StudentsController).apiOnly().where('id', router.matchers.number())
-}).prefix('/api')
-.use(middleware.auth_key())
 
 
-router.group(() => {
-  router.post('enroll', [StudentsController, 'enroll'])
-  router.post('courses/:id/enroll-students', [CoursesController, 'enrollStudents']).where('id', router.matchers.number())
-}).prefix('/api')
-.use(middleware.jwtAuth())
+
+
