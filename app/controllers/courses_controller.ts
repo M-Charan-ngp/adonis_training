@@ -1,95 +1,77 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Course from '#models/course'
-import { createCourseValidator, 
-  updateCourseValidator,
-  getCourseQueryValidator,
-  enrollStudentsValidator } from '#validators/course'
+import { 
+  createCourseValidator, 
+  updateCourseValidator, 
+  getCourseQueryValidator, 
+  enrollStudentsValidator 
+} from '#validators/course'
+import CourseRepository from '#repositories/course_repository'
+import CourseDomain from '#domain/course_domain'
 import { SimpleMessagesProvider } from '@vinejs/vine'
 
-const messages = {
-  'courseCode.regex': 'The course code not in the proper format: (e.g., CS101)',
-  'courseCode.unique': 'This course code is already registered',
-  'departmentId.exists': 'The selected department does not exist',
-}
-
 export default class CoursesController {
-  // List all courses
-async index({ request, response }: HttpContext) {
-  const queryData = await request.validateUsing(getCourseQueryValidator)
-  const page = request.input('page', 1)
-  const limit = request.input('limit', 10)
+  protected repository = new CourseRepository()
+  protected domain = new CourseDomain()
 
-  let query = Course.query()
-  if (queryData.department) {
-    query.preload('department')
-  }
-  if (queryData.students) {
-    query.preload('students')
-  }
-  const courses = await query.paginate(page, limit)
-  const serialized = courses.serialize()
-  
-  const cleanData = serialized.data.map((course: any) => {
-    const { createdAt, updatedAt, ...rest } = course
-    return rest
-  })
-
-  return response.status(200).send({
-    status: true,
-    data: {
-      meta: serialized.meta,
-      data: cleanData
-    }
-  })
-}
-
-  // add course
-  async store({ request, response }: HttpContext) {
-    const data = await request.validateUsing(createCourseValidator, {
-      messagesProvider: new SimpleMessagesProvider(messages),
-    })
-    const course = await Course.create(data)
-    return response.created(course)
+  private messages = {
+    'courseCode.regex': 'The course code not in the proper format: (e.g., CS101)',
+    'courseCode.unique': 'This course code is already registered',
+    'departmentId.exists': 'The selected department does not exist',
   }
 
-// Show a single course
-  async show({ params, request, response }: HttpContext) {
+  async index({ request }: HttpContext) {
     const queryData = await request.validateUsing(getCourseQueryValidator)
-
-    let query = Course.query().where('id', params.id)
-    query = queryData.students ? query.preload('students') : query;
-    query = queryData.department ? query.preload('department') : query;
-
-    const course = await query.firstOrFail()
-    return response.ok(course)
-  }
-
-  // Update course
-  async update({ params, request, response }: HttpContext) {
-    const course = await Course.findOrFail(params.id)
-    const data = await request.validateUsing(updateCourseValidator, {
-      meta: { courseId: params.id }
-    })
-
-    course.merge(data)
-    await course.save()
-
-    return response.ok(course)
-  }
-
-
-  async enrollStudents({ params, request, response }: HttpContext) {
     
-    const payload = await request.validateUsing(enrollStudentsValidator)
-    const course = await Course.findOrFail(params.id)
-    await course.related('students').sync(payload.studentIds, false)
-    return response.ok({ message: 'Students enrolled successfully.' })
+    const rawData = await this.repository.list(queryData)
+
+    const data = await this.domain.transformList(rawData)
+    return { status: true, data }
+  }
+
+  async store({ request }: HttpContext) {
+
+  const validatedData = await request.validateUsing(createCourseValidator, {
+      messagesProvider: new SimpleMessagesProvider(this.messages),
+    })
+  const dbReadyData = await this.domain.prepareForStorage(validatedData)
+  const course = await this.repository.store(dbReadyData)
+  const data = await this.domain.transformSingle(course)
+
+  return { status: true, message: 'Course created successfully.' , data }
 }
 
-  // Delete Course
-  async destroy({ params, response }: HttpContext) {
-    const course = await Course.findOrFail(params.id)
-    await course.delete()
-    return response.ok({ message: 'Course deleted successfully' })
+  async show({ params, request }: HttpContext) {
+    const queryData = await request.validateUsing(getCourseQueryValidator)
+    
+    const rawCourse = await this.repository.getById(params.id, queryData)
+    const data = await this.domain.transformSingle(rawCourse)
+
+    return { status: true, data }
+  }
+
+  async update({ params, request }: HttpContext) {
+    const validatedData = await request.validateUsing(updateCourseValidator, {
+      meta: { courseId: params.id },
+      messagesProvider: new SimpleMessagesProvider(this.messages),
+    })
+
+    const dbReadyData = await this.domain.prepareForUpdate(validatedData)
+    const updatedCourse = await this.repository.update(params.id, dbReadyData)
+    const data = await this.domain.transformSingle(updatedCourse)
+
+    return { status: true, message: 'Course updated successfully.' , data }
+  }
+
+  async enrollStudents({ params, request }: HttpContext) {
+    const payload = await request.validateUsing(enrollStudentsValidator)
+    
+    await this.repository.syncStudents(params.id, payload.studentIds)
+    
+    return { status: true, message: 'Students enrolled successfully.' }
+  }
+
+  async destroy({ params }: HttpContext) {
+    await this.repository.delete(params.id)
+    return { status: true, message: 'Course deleted successfully' }
   }
 }

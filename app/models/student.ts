@@ -5,6 +5,7 @@ import RefreshToken from '#models/refresh_token'
 import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import Department from '#models/department'
 import Course from '#models/course'
+
 export default class Student extends BaseModel {
   
   @column({ isPrimary: true })

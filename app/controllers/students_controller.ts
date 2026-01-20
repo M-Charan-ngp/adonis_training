@@ -1,107 +1,80 @@
-// app/controllers/students_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import { inject } from '@adonisjs/core'
-import StudentService from '#domain/student/student_service'
-import EnrollmentService from '#domain/enrollement/enrollment_service'
+import { SimpleMessagesProvider } from '@vinejs/vine'
+import { Exception } from '@adonisjs/core/exceptions'
+import StudentRepository from '#repositories/student_repository'
+import StudentDomain from '#domain/student_domain'
+import Student from '#models/student'
+import EnrollmentService from '#services/enrollment_service'
 import { 
   createStudentValidator, 
   updateStudentValidator, 
   getStudentQueryValidator, 
-  putEnrollQueryValidator
+  putEnrollQueryValidator 
 } from '#validators/student'
-import { SimpleMessagesProvider } from '@vinejs/vine'
 
-const messages = {
-  'rollNo.regex': 'The roll number is not in the proper format (e.g., 24ABC1234).',
-  'rollNo.unique': 'This roll number is already registered.',
-  'departmentId.exists': 'The selected department does not exist.',
-}
-
-@inject()
 export default class StudentsController {
-  constructor(
-    protected studentService: StudentService,
-    protected enrollmentService: EnrollmentService
-  ) {}
-  // Fetch all students with pagination
-  async index({ request }: HttpContext) {
-    const queryData = await request.validateUsing(getStudentQueryValidator)
-    const result = await this.studentService.fetchAllStudents(queryData)
-    
-    return {
-      status: true,
-      data: result
-    }
+  protected repository = new StudentRepository()
+  protected domain = new StudentDomain()
+  protected enrollmentService = new EnrollmentService()
+
+  private messages = {
+    'rollNo.regex': 'The roll number is not in the proper format (e.g., 24ABC1234).',
+    'rollNo.unique': 'This roll number is already registered.',
+    'departmentId.exists': 'The selected department does not exist.',
   }
 
-
-  // Create a new student record
+  async index({ request }: HttpContext) {
+    const query = await request.validateUsing(getStudentQueryValidator)
+    const raw = await this.repository.list(query)
+    const data = await this.domain.transformList(raw)
+    return { status: true, data }
+  }
 
   async store({ request }: HttpContext) {
-    const data = await request.validateUsing(createStudentValidator, {
-      messagesProvider: new SimpleMessagesProvider(messages),
+    const validated = await request.validateUsing(createStudentValidator, {
+      messagesProvider: new SimpleMessagesProvider(this.messages),
     })
-    
-    const student = await this.studentService.createStudent(data)
-    
-    return {
-      status: true,
-      message: 'Student created successfully',
-      data: student
-    }
+    const dbData = await this.domain.prepareForStorage(validated)
+    const student = await this.repository.store(dbData)
+    const data = await this.domain.transformSingle(student)
+    return { status: true, message: 'Student created successfully', data }
   }
 
-
-  // Fetch a single student's details
-
-  async show({ params, request, }: HttpContext) {
+  async show({ params, request }: HttpContext) {
     const queryData = await request.validateUsing(getStudentQueryValidator)
-    const student = await this.studentService.fetchOneStudent(params.id, queryData)
-    
-    return {
-      status: true,
-      data: student
-    }
+    const student = await this.repository.getById(params.id, queryData)
+    const data = await this.domain.transformSingle(student)
+    return { status: true, data }
   }
 
+  async enroll({ request, auth }: HttpContext) {
+    const payload = await request.validateUsing(putEnrollQueryValidator)
+    const user = auth.user as Student
+    const studentId = user.id
 
-  // Update an existing student record
+    const alreadyEnrolled = await this.repository.checkEnrollment(studentId, payload.courseId)
+    if (alreadyEnrolled) {
+      throw new Exception('Student is already enrolled in this course', { status: 400 })
+    }
+    await this.repository.saveSyncEnrollment(studentId, payload.courseId)
+    await this.enrollmentService.logEnrollment(studentId, payload.courseId)
+
+    return { status: true, message: 'Enrollment successful' }
+  }
 
   async update({ params, request }: HttpContext) {
-    const data = await request.validateUsing(updateStudentValidator, {
-      messagesProvider: new SimpleMessagesProvider(messages),
+    const validated = await request.validateUsing(updateStudentValidator, {
+      messagesProvider: new SimpleMessagesProvider(this.messages),
       meta: { studentId: params.id }
     })
-
-    const student = await this.studentService.updateStudent(params.id, data)
-    
-    return {
-      status: true,
-      message: 'Student updated successfully',
-      data: student
-    }
+    const dbData = await this.domain.prepareForUpdate(validated)
+    const student = await this.repository.update(params.id, dbData)
+    const data = await this.domain.transformSingle(student)
+    return { status: true, message: 'Student updated successfully', data }
   }
 
-  // Delete a student record
   async destroy({ params }: HttpContext) {
-    await this.studentService.deleteStudent(params.id)
-    
-    return {
-      status: true,
-      message: 'Student deleted successfully'
-    }
-  }
-
-  // enroll student
-  async enroll({ request, auth_user }: HttpContext) {
-    console.log("enroll Function")
-    const payload = await request.validateUsing(putEnrollQueryValidator)
-    
-    await this.enrollmentService.enroll(auth_user.id, payload.courseId)
-
-    return {
-      status: true,
-      message: 'Enrollment Success.'
-    }
+    await this.repository.delete(params.id)
+    return { status: true, message: 'Student deleted successfully' }
   }
 }

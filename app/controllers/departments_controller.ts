@@ -1,84 +1,63 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Department from '#models/department'
-import { createDepartmentValidator, updateDepartmentValidator,getDepartmentQueryValidator } from '#validators/department'
-import { SimpleMessagesProvider } from '@vinejs/vine'
-
-const messages = {
-  'code.unique': 'This Department code is already registered',
-  'name.required': 'Department name is required',
-}
+import { 
+  createDepartmentValidator, 
+  getDepartmentQueryValidator, 
+  updateDepartmentValidator 
+} from '#validators/department'
+import DepartmentRepository from '#repositories/department_repository'
+import DepartmentDomain from '#domain/department_domain'
 
 export default class DepartmentsController {
-  
-  //  List all departments
+  protected repository = new DepartmentRepository()
+  protected domain = new DepartmentDomain()
+
   async index({ request }: HttpContext) {
     const queryData = await request.validateUsing(getDepartmentQueryValidator)
-    const page = request.input('page', 1)
-    const limit = request.input('limit', 10)
-    let query = Department.query()
-    query = queryData.students ? query.preload('students'):query;
-    query = queryData.courses ? query.preload('courses'):query;
-
-    const departments = await query.paginate(page,limit)
-      return {
-      status: true,
-      data: departments
-    }
+    const rawData = await this.repository.list(queryData)
+    
+    const data = await this.domain.transformList(rawData)
+    return { status: true, data }
   }
 
-  // Create a department
   async store({ request }: HttpContext) {
-      const data = await request.validateUsing(createDepartmentValidator, {
-        messagesProvider: new SimpleMessagesProvider(messages),
-      })
-      const department = await Department.create(data)
-      return {
-        status: true,
-        message: 'Student created successfully',
-        data: department
-      }
-  }
-
-  //  Show department
-async show({ params, request }: HttpContext) {
-  const queryData = await request.validateUsing(getDepartmentQueryValidator)
-  const query = Department.query().where('id', params.id)
-  if (queryData.students) {
-    query.preload('students')
-  }
-  if (queryData.courses) {
-    query.preload('courses')
-  }
-  const department = await query.firstOrFail()
-  return {
-    status: true,
-    data: department
-  }
-}
-
-  //   Update department
-  async update({ params, request }: HttpContext) {
-    const data = await request.validateUsing(updateDepartmentValidator, {
-        meta: { departmentId: params.id }
-    })
-    const department = await Department.findOrFail(params.id)
-    department.merge(data)
-    await department.save()
-    return {
-      status: true,
-      data: department
+    const validatedData = await request.validateUsing(createDepartmentValidator)
+    const dbReadyData = await this.domain.prepareForStorage(validatedData)
+    const department = await this.repository.store(dbReadyData)
+    const data = await this.domain.transformSingle(department)
+    
+    return { 
+      status: true, 
+      message: 'Department created successfully', 
+      data 
     }
   }
 
+  async show({ params, request }: HttpContext) {
+    const queryData = await request.validateUsing(getDepartmentQueryValidator)
 
-  //   Delete department
+    const rawDepartment = await this.repository.getById(params.id, queryData)
+    const data = await this.domain.transformSingle(rawDepartment)
+
+    return { status: true, data }
+  }
+
+  async update({ params, request }: HttpContext) {
+    const validatedData = await request.validateUsing(updateDepartmentValidator, {
+      meta: { departmentId: params.id }
+    })
+
+    const dbReadyData = await this.domain.prepareForUpdate(validatedData)
+    const updatedRecord = await this.repository.update(params.id, dbReadyData)
+    const data = await this.domain.transformSingle(updatedRecord)
+
+    return { status: true, data }
+  }
+
   async destroy({ params }: HttpContext) {
-      const department = await Department.findOrFail(params.id)
-      await department.delete()
-      return { 
-        status: true,
-        message: 'Department deleted successfully' 
-      }
+    await this.repository.delete(params.id)
+    return { 
+      status: true, 
+      message: 'Department deleted successfully' 
+    }
   }
 }
-
