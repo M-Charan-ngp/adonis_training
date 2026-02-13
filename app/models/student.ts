@@ -7,15 +7,28 @@ import Department from '#models/department'
 import Course from '#models/course'
 
 export default class Student extends BaseModel {
-  
+  // Primary ID
   @column({ isPrimary: true })
   declare id: number
+
+  // Core Identity (Matches your frontend 24MCA0051)
+  @column()
+  declare regNo: string
 
   @column()
   declare name: string
 
   @column()
-  declare rollNo: string
+  declare gender: string
+
+  @column.date()
+  declare dob: DateTime
+
+  @column()
+  declare phone: string
+
+  @column()
+  declare email: string
 
   @column()
   declare departmentId: number
@@ -24,15 +37,15 @@ export default class Student extends BaseModel {
   declare department: BelongsTo<typeof Department>
 
   @manyToMany(() => Course, {
-    pivotTable: 'enrollments',
+    pivotTable: 'enrollement',
     pivotForeignKey: 'student_id',
     pivotRelatedForeignKey: 'course_id',
   })
-  declare courses: ManyToMany<typeof Course>
+  declare subjects: ManyToMany<typeof Course>
 
   @hasMany(() => RefreshToken)
   declare refreshTokens: HasMany<typeof RefreshToken>
-  
+ 
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -40,5 +53,4 @@ export default class Student extends BaseModel {
   declare updatedAt: DateTime
 
   static accessTokens = DbAccessTokensProvider.forModel(Student);
-
 }

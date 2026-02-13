@@ -18,8 +18,9 @@ export default class StudentsController {
   protected enrollmentService = new EnrollmentService()
 
   private messages = {
-    'rollNo.regex': 'The roll number is not in the proper format (e.g., 24ABC1234).',
-    'rollNo.unique': 'This roll number is already registered.',
+    'regNo.regex': 'The roll number is not in the proper format (e.g., 24ABC1234).',
+    'regNo.unique': 'This roll number is already registered.',
+    'email.unique': 'This email address is already in use.',
     'departmentId.exists': 'The selected department does not exist.',
   }
 

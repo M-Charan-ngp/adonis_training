@@ -26,8 +26,21 @@ router
     router
       .group(() => {
         router.post('login', [AuthController, 'login'])
-        router.post('refresh', [AuthController, 'refresh'])
+        router.post('register', [AuthController, 'signup'])
+      })
+      .use(middleware.auth_key())
+
+    router
+      .group(() => {
+        router.post('enroll', [StudentsController, 'enroll'])
         router
+          .post('courses/:id/enroll-students', [CoursesController, 'enrollStudents'])
+          .where('id', router.matchers.number())
+      })
+      .use(middleware.jwtAuth())
+      router
+        .group(()=> {
+          router
           .group(() => {
             router.get('/', [DepartmentsController, 'index'])
             router.post('/', [DepartmentsController, 'store'])
@@ -83,16 +96,7 @@ router
               .where('id', router.matchers.number())
           })
           .prefix('students')
-      })
-      .use(middleware.auth_key())
-
-    router
-      .group(() => {
-        router.post('enroll', [StudentsController, 'enroll'])
-        router
-          .post('courses/:id/enroll-students', [CoursesController, 'enrollStudents'])
-          .where('id', router.matchers.number())
-      })
-      .use(middleware.jwtAuth())
+        }).use(middleware.jwtAuth())
+      
   })
   .prefix('/api')

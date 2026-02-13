@@ -1,77 +1,55 @@
-// app/controllers/auth_controller.ts
-import Student from '#models/student'
-import RefreshToken from '#models/refresh_token'
+import User from '#models/user'
+import hash from '@adonisjs/core/services/hash'
 import { JwtService } from '#services/jwt_service'
-import { rollNumberValidator } from '#validators/auth'
-import { DateTime } from 'luxon'
 import { HttpContext } from '@adonisjs/core/http'
-import string from '@adonisjs/core/helpers/string'
 
 export default class AuthController {
-  async login({ request, response }: HttpContext) {
-    const data = await request.validateUsing(rollNumberValidator)
-    console.log(data.rollNo)
+  /**
+   * SIGNUP ACTION
+   */
+  async signup({ request, response }: HttpContext) {
+    const { name, email, password, role } = request.only(['name', 'email', 'password', 'role'])
 
-    const query = Student.query().where('roll_no', data.rollNo)
-    const student = await query.firstOrFail()
-    console.log(student.id)
-    if (!student) {
-      return response.notFound({ 
-        message: 'No student found with this Roll Number.' 
-      })
+    const existingUser = await User.findBy('email', email)
+    if (existingUser) {
+      return response.badRequest({ message: 'Email already registered' })
     }
-    console.log("student verified") 
-    const token = JwtService.sign({ 
-      id: student.id, 
-      rollNo: student.rollNo 
+    const hashedPassword = await hash.make(password)
+    const user = await User.create({ 
+      name, 
+      email, 
+      password: hashedPassword, 
+      role: role || 'user' 
     })
-    console.log("jwt created")
-    const refreshTokenValue = string.random(64)
 
-    await RefreshToken.create({
-      studentId: student.id,
-      token: refreshTokenValue,
-      expiresAt: DateTime.now().plus({ days: 30 })
+    return { 
+      message: 'Account created successfully', 
+      user: { name: user.name, email: user.email, role: user.role } 
+    }
+  }
+
+  async login({ request, response }: HttpContext) {
+    const { email, password } = request.only(['email', 'password'])
+
+    const user = await User.findBy('email', email)
+    console.log(user);
+    if (!user) {
+      return response.unauthorized({ message: 'Invalid credentials' })
+    }
+
+    const isPasswordValid = await hash.verify(user.password, password)
+    if (!isPasswordValid) {
+      return response.unauthorized({ message: 'Invalid credentials' })
+    }
+    const token = JwtService.sign({ 
+      id: user.id, 
+      name: user.name, 
+      role: user.role 
     })
-    response.cookie('refreshToken', refreshTokenValue, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: '30d'
-    })
-    console.log("cookie loaded")
-    return response.ok({
+
+    return {
       message: 'Login successful',
       token: token,
-      studentName: student.name
-    })
+    }
   }
-
-async refresh({ request, response }: HttpContext) {
-  const tokenValue = request.cookie('refreshToken')
-
-  if (!tokenValue) {
-    return response.unauthorized({ message: 'Session expired' })
-  }
-
-  const storedToken = await RefreshToken.query()
-    .where('token', tokenValue)
-    .where('expires_at', '>', DateTime.now().toSQL())
-    .preload('student')
-    .first()
-
-  if (!storedToken) {
-    return response.unauthorized({ message: 'Invalid session' })
-  }
-
-  const student = storedToken.student
-  const newAccessToken = JwtService.sign({ 
-    id: student.id, 
-    rollNo: student.rollNo 
-  })
-
-  return response.ok({
-    token: newAccessToken
-  })
-}
 }

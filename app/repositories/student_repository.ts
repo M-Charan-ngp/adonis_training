@@ -4,24 +4,27 @@ import { StudentQueryDto } from '#validators/student'
 
 export default class StudentRepository {
   async list(includes: StudentQueryDto): Promise<ModelPaginatorContract<Student>> {
-  const query = Student.query()
-  if (includes.search) {
-    query.where((q) => {
-      q.where('name', 'like', `%${includes.search}%`)
-       .orWhere('roll_no', 'like', `%${includes.search}%`)
-    })
+    const query = Student.query()
+    
+    if (includes.search) {
+      query.where((q) => {
+        q.where('name', 'like', `%${includes.search}%`)
+        .orWhere('reg_no', 'like', `%${includes.search}%`)
+      })
+    }
+    if (includes.department) query.preload('department')
+    if (includes.courses) query.preload('subjects')
+    const sortColumn = includes.sortBy === 'regNo' ? 'reg_no' : includes.sortBy
+    query.orderBy(sortColumn as any, includes.sortOrder as any)
+    return await query.paginate(includes.page, includes.limit)
   }
-  if (includes.department) query.preload('department')
-  if (includes.courses) query.preload('courses')
-  query.orderBy(includes.sortBy as any, includes.sortOrder as any)
-
-  return await query.paginate(includes.page, includes.limit)
-}
 
   async getById(id: number, includes: StudentQueryDto): Promise<Student> {
     const query = Student.query().where('id', id)
+    
     if (includes.department) query.preload('department')
-    if (includes.courses) query.preload('courses')
+    if (includes.courses) query.preload('subjects')
+    
     return await query.firstOrFail()
   }
 
@@ -39,14 +42,14 @@ export default class StudentRepository {
     await student.delete()
   }
 
-  async checkEnrollment(studentId: number, courseId: number): Promise<boolean> {
+  async checkEnrollment(studentId: number, subjectId: number): Promise<boolean> {
     const student = await Student.findOrFail(studentId)
-    const enrollment = await student.related('courses').query().where('courses.id', courseId).first()
+    const enrollment = await student.related('subjects').query().where('courses.id', subjectId).first()
     return !!enrollment
   }
 
-  async saveSyncEnrollment(studentId: number, courseId: number): Promise<void> {
+  async saveSyncEnrollment(studentId: number, subjectId: number): Promise<void> {
     const student = await Student.findOrFail(studentId)
-    await student.related('courses').sync([courseId], false)
+    await student.related('subjects').sync([subjectId], false)
   }
 }

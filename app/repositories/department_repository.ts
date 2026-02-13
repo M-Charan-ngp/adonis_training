@@ -3,10 +3,6 @@ import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { DepartmentQueryDto } from '#validators/department'
 
 export default class DepartmentRepository {
-  /**
-   * Fetches a paginated list of departments.
-   * The 'includes' parameter is strictly typed from the validator.
-   */
   async list(
     includes: DepartmentQueryDto
   ): Promise<ModelPaginatorContract<Department>> {

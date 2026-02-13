@@ -28,7 +28,7 @@ export default class DepartmentDomain {
 
     if (department.students) {
       result.student_list = department.students.map((s) => ({
-        rollNumber: s.rollNo,
+        rollNumber: s.regNo,
         name: s.name,
       }))
     }

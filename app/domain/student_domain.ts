@@ -3,28 +3,40 @@ import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { CreateStudentDto, UpdateStudentDto } from '#validators/student'
 
 export default class StudentDomain {
+  /** INBOUND: Map Frontend DTO to Database columns */
   async prepareForStorage(data: CreateStudentDto): Promise<Record<string, any>> {
     return {
       name: data.name,
-      roll_no: data.rollNo.trim().toUpperCase(),
+      reg_no: data.regNo.trim().toUpperCase(), // Changed from roll_no
       department_id: data.departmentId,
+      email: data.email,
+      gender: data.gender,
+      dob: data.dob,
+      phone: data.phone,
     }
   }
 
   async prepareForUpdate(data: UpdateStudentDto): Promise<Record<string, any>> {
     const payload: Record<string, any> = {}
     if (data.name) payload.name = data.name
-    if (data.rollNo) payload.roll_no = data.rollNo.trim().toUpperCase()
+    if (data.regNo) payload.reg_no = data.regNo.trim().toUpperCase()
     if (data.departmentId) payload.department_id = data.departmentId
+    if (data.email) payload.email = data.email
+    if (data.gender) payload.gender = data.gender
+    if (data.dob) payload.dob = data.dob
+    if (data.phone) payload.phone = data.phone
     return payload
   }
 
-  /** OUTBOUND: snake_case -> camelCase Display */
   async transformSingle(student: Student) {
     const response: any = {
-      studentId: student.id,
+      id: student.id,
       name: student.name,
-      rollNo: student.rollNo,
+      regNo: student.regNo, 
+      email: student.email,
+      gender: student.gender,
+      dob: student.dob, 
+      phone: student.phone,
       departmentId: student.departmentId,
     }
 
@@ -35,11 +47,10 @@ export default class StudentDomain {
       }
     }
 
-    if (student.courses) {
-      response.enrolledCourses = student.courses.map((course) => ({
-        courseId: course.id,
-        title: course.title,
-        courseCode: course.courseCode,
+    if (student.subjects) {
+      response.enrolledCourses = student.subjects.map((subject) => ({
+        subjectId: subject.id,
+        title: subject.title,
       }))
     }
 

@@ -42,7 +42,7 @@ export default class CourseDomain {
   if (course.students) {
     response.enrolledStudents = course.students.map((student) => ({         
       studentName: student.name, 
-      rollNumber: student.rollNo
+      rollNumber: student.regNo
     }))
   }
 

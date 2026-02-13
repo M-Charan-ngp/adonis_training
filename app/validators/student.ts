@@ -7,46 +7,54 @@ const sharedSchema = {
     const match = await db.from('departments').where('id', value).first()
     return !!match
   }),
+  gender: vine.string().trim().optional(), 
+  dob: vine.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  phone: vine.string().trim().maxLength(20).optional(),
 }
-
 
 export const createStudentValidator = vine.compile(
   vine.object({
     name: sharedSchema.name,
     departmentId: sharedSchema.departmentId,
+    gender: sharedSchema.gender,
+    dob: sharedSchema.dob,
+    phone: sharedSchema.phone,
     email: vine.string().email().unique(async (db, value) => {
       const match = await db.from('students').where('email', value).first()
       return !match
     }),
-    rollNo: vine.string().trim()
+    regNo: vine.string().trim()
       .regex(/^[0-9]{2}[A-Z]{3}[0-9]{4}$/) 
       .unique(async (db, value) => {
-        const match = await db.from('students').where('roll_no', value).first()
+        const match = await db.from('students').where('reg_no', value).first()
         return !match
       }),
   })
 )
 
-
 export const updateStudentValidator = vine.compile(
   vine.object({
     name: sharedSchema.name.optional(),
     departmentId: sharedSchema.departmentId.optional(),
-    rollNo: vine.string()
-      .trim()
-      .regex(/^[0-9]{2}[A-Z]{3}[0-9]{4}$/)
-      .unique(async (db, value, field) => {
-        const match = await db.from('students')
-          .select('id')
-          .where('roll_no', value)
-          .whereNot('id', field.meta.studentId || 0)
-          .first()
-        return !match
-      })
-      .optional()
+    gender: sharedSchema.gender.optional(),
+    dob: sharedSchema.dob.optional(),
+    phone: sharedSchema.phone.optional(),
+    email: vine.string().email().unique(async (db, value, field) => {
+      const match = await db.from('students')
+        .where('email', value)
+        .whereNot('id', field.meta.studentId)
+        .first()
+      return !match
+    }).optional(),
+    regNo: vine.string().trim().unique(async (db, value, field) => {
+      const match = await db.from('students')
+        .where('reg_no', value)
+        .whereNot('id', field.meta.studentId)
+        .first()
+      return !match
+    }).optional(),
   })
 )
-
 
 export const getStudentQueryValidator = vine.compile(
   vine.object({
@@ -55,12 +63,10 @@ export const getStudentQueryValidator = vine.compile(
     page: vine.number().parse((value) => value ?? 1),
     limit: vine.number().parse((value) => value ?? 10),
     search: vine.string().trim().optional(),
-    sortBy: vine.enum(['id', 'name', 'roll_no', 'createdAt']).parse((v) => v ?? 'id'),
+    sortBy: vine.enum(['id', 'name', 'regNo', 'createdAt']).parse((v) => v ?? 'id'),
     sortOrder: vine.enum(['asc', 'desc']).parse((v) => v ?? 'asc'),
   })
 )
-
-
 export const putEnrollQueryValidator = vine.compile(
   vine.object({
     courseId: vine.number().exists(async (db, value) => {
@@ -69,7 +75,6 @@ export const putEnrollQueryValidator = vine.compile(
     })
   })
 )
-
 
 export type CreateStudentDto = Infer<typeof createStudentValidator>
 export type UpdateStudentDto = Infer<typeof updateStudentValidator>
