@@ -3,11 +3,10 @@ import { ModelPaginatorContract } from '@adonisjs/lucid/types/model'
 import { CreateStudentDto, UpdateStudentDto } from '#validators/student'
 
 export default class StudentDomain {
-  /** INBOUND: Map Frontend DTO to Database columns */
   async prepareForStorage(data: CreateStudentDto): Promise<Record<string, any>> {
     return {
       name: data.name,
-      reg_no: data.regNo.trim().toUpperCase(), // Changed from roll_no
+      reg_no: data.regNo.trim().toUpperCase(),
       department_id: data.departmentId,
       email: data.email,
       gender: data.gender,

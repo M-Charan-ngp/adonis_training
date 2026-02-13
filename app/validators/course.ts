@@ -24,6 +24,8 @@ export const createCourseValidator = vine.compile(
   })
 )
 
+
+
 export const getCourseQueryValidator = vine.compile(
   vine.object({
     students: vine.boolean().parse((value) => value ?? false),
@@ -33,7 +35,7 @@ export const getCourseQueryValidator = vine.compile(
   })
 )
 
-export const enrollStudentsValidator = vine.compile(
+export const bulkEnrollValidator = vine.compile(
   vine.object({
     studentIds: vine.array(
       vine.number().exists(async (db, value) => {
@@ -64,4 +66,4 @@ export const updateCourseValidator = vine.compile(
 export type CreateCourseDto = Infer<typeof createCourseValidator>
 export type UpdateCourseDto = Infer<typeof updateCourseValidator>
 export type CourseQueryDto = Infer<typeof getCourseQueryValidator>
-export type EnrollStudentsDto = Infer<typeof enrollStudentsValidator>
+export type EnrollStudentsDto = Infer<typeof bulkEnrollValidator>

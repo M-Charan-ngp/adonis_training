@@ -1,6 +1,7 @@
 import vine from '@vinejs/vine'
 import { Infer } from '@vinejs/vine/types'
 
+
 const sharedSchema = {
   name: vine.string().trim().minLength(3).maxLength(100),
   departmentId: vine.number().exists(async (db, value) => {
@@ -67,16 +68,20 @@ export const getStudentQueryValidator = vine.compile(
     sortOrder: vine.enum(['asc', 'desc']).parse((v) => v ?? 'asc'),
   })
 )
-export const putEnrollQueryValidator = vine.compile(
+export const enrollSingleValidator = vine.compile(
   vine.object({
+    studentId: vine.number().exists(async (db, value) => {
+      const match = await db.from('students').where('id', value).first()
+      return !!match
+    }),
     courseId: vine.number().exists(async (db, value) => {
       const match = await db.from('courses').where('id', value).first()
       return !!match
-    })
+    }),
   })
 )
 
 export type CreateStudentDto = Infer<typeof createStudentValidator>
 export type UpdateStudentDto = Infer<typeof updateStudentValidator>
 export type StudentQueryDto = Infer<typeof getStudentQueryValidator>
-export type PutEnrollDto = Infer<typeof putEnrollQueryValidator>
+export type PutEnrollDto = Infer<typeof enrollSingleValidator>

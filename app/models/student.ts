@@ -7,11 +7,9 @@ import Department from '#models/department'
 import Course from '#models/course'
 
 export default class Student extends BaseModel {
-  // Primary ID
   @column({ isPrimary: true })
   declare id: number
 
-  // Core Identity (Matches your frontend 24MCA0051)
   @column()
   declare regNo: string
 
@@ -37,7 +35,7 @@ export default class Student extends BaseModel {
   declare department: BelongsTo<typeof Department>
 
   @manyToMany(() => Course, {
-    pivotTable: 'enrollement',
+    pivotTable: 'enrollments',
     pivotForeignKey: 'student_id',
     pivotRelatedForeignKey: 'course_id',
   })

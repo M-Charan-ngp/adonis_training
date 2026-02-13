@@ -1,15 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import { SimpleMessagesProvider } from '@vinejs/vine'
-import { Exception } from '@adonisjs/core/exceptions'
 import StudentRepository from '#repositories/student_repository'
 import StudentDomain from '#domain/student_domain'
-import Student from '#models/student'
 import EnrollmentService from '#services/enrollment_service'
 import { 
   createStudentValidator, 
   updateStudentValidator, 
-  getStudentQueryValidator, 
-  putEnrollQueryValidator 
+  getStudentQueryValidator,
+  enrollSingleValidator
 } from '#validators/student'
 
 export default class StudentsController {
@@ -48,21 +46,17 @@ export default class StudentsController {
     return { status: true, data }
   }
 
-  async enroll({ request, auth }: HttpContext) {
-    const payload = await request.validateUsing(putEnrollQueryValidator)
-    const user = auth.user as Student
-    const studentId = user.id
-
-    const alreadyEnrolled = await this.repository.checkEnrollment(studentId, payload.courseId)
+  async enroll({ request, response }: HttpContext) {
+    const payload = await request.validateUsing(enrollSingleValidator)
+    const alreadyEnrolled = await this.repository.checkEnrollment(payload.studentId, payload.courseId)
     if (alreadyEnrolled) {
-      throw new Exception('Student is already enrolled in this course', { status: 400 })
+      return response.badRequest({ message: 'Student is already enrolled in this course' })
     }
-    await this.repository.saveSyncEnrollment(studentId, payload.courseId)
-    await this.enrollmentService.logEnrollment(studentId, payload.courseId)
+    await this.repository.saveSyncEnrollment(payload.studentId, payload.courseId)
+    await this.enrollmentService.logEnrollment(payload.studentId, payload.courseId)
 
     return { status: true, message: 'Enrollment successful' }
-  }
-
+}
   async update({ params, request }: HttpContext) {
     const validated = await request.validateUsing(updateStudentValidator, {
       messagesProvider: new SimpleMessagesProvider(this.messages),

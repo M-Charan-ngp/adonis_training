@@ -3,7 +3,7 @@ import {
   createCourseValidator, 
   updateCourseValidator, 
   getCourseQueryValidator, 
-  enrollStudentsValidator 
+  bulkEnrollValidator
 } from '#validators/course'
 import CourseRepository from '#repositories/course_repository'
 import CourseDomain from '#domain/course_domain'
@@ -62,12 +62,23 @@ export default class CoursesController {
     return { status: true, message: 'Course updated successfully.' , data }
   }
 
-  async enrollStudents({ params, request }: HttpContext) {
-    const payload = await request.validateUsing(enrollStudentsValidator)
+  async enrollStudents({ params, request, response }: HttpContext) {
+    const payload = await request.validateUsing(bulkEnrollValidator)
     
-    await this.repository.syncStudents(params.id, payload.studentIds)
-    
-    return { status: true, message: 'Students enrolled successfully.' }
+    try {
+      await this.repository.syncStudents(params.id, payload.studentIds)
+      
+      return { 
+        status: true, 
+        message: 'Students enrolled successfully.' 
+      }
+    } catch (error) {
+      console.error(error)
+      return response.internalServerError({ 
+        status: false, 
+        message: 'An error occurred during bulk enrollment.' 
+      })
+    }
   }
 
   async destroy({ params }: HttpContext) {
