@@ -7,11 +7,14 @@ services:
     restart: always
     environment:
       MYSQL_DATABASE: adonis
-      MYSQL_ROOT_PASSWORD: MySQL@123
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
     volumes:
       - db_data:/var/lib/mysql
+    secrets:
+      - db_root_password
 
   backend:
+    build: .
     image: student_backend:latest
     container_name: adonis_api
     restart: always
@@ -26,6 +29,7 @@ services:
       - db
 
   frontend:
+    build: /Users/charan/intern/FrontEnd/Training_project/
     image: student_frontend:latest
     container_name: vue_app
     restart: always
@@ -35,5 +39,8 @@ services:
       - "5173:5173"
     depends_on:
       - backend
+secrets:
+  db_root_password:
+    file: ./db_root_password.txt
 volumes:
   db_data:

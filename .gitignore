@@ -8,6 +8,8 @@ tmp
 .env.local
 .env.production.local
 .env.development.local
+db_root_password.txt
+
 
 # Frontend assets compiled code
 public/assets
